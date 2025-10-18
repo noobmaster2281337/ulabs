@@ -5,116 +5,90 @@
 using namespace std;
 const int N_Max = 2000;
 
-bool Read(int& n, int& cnt, string words[N_Max]) { // Считывает данные с файла в массив
+bool Read(int& n, string words[N_Max])
+{
     ifstream in("input.txt");
-    if (!in.is_open()) {
-        cerr << "file error" << endl; // cerr не буферизирует
-        return false; 
+    if(!in.is_open()) {
+        std::cout << "File not opened" << endl;
+        return false;
     }
-    in >> n;
-    while (!in.eof()) {
-        in >> words[cnt];
-        cnt++;
+    n = 0;
+    while(!in.eof()) {
+        in >> words[n];
+        n++;
     }
     return true;
 }
-void debugwrite(int cnt, string words[N_Max]) { // вывод до в консоль
-    for (int i = 0; i < cnt; i++)
+void Write(int& n, string words[N_Max]) {
+    for(int i=0;i<n;i++)
         cout << "<" << words[i] << ">" << endl;
 }
-void ClearWords(int cnt, string words[N_Max]) { // очистка и нижний регистр
+
+void clearWords(int cnt, string words[N_Max]) {
     for (int i = 0; i < cnt; i++) 
-        for (int j = 0; j < words[i].length(); j++) { // пробегаемся по слову
-            if (!isalpha(words[i][j])) { // проверяет буква ли
+        for (j = 0; j < words[i].length();) {
+            if (!isalpha(words[i][j])) {
                 words[i].erase(j, 1);
-                j--;
+            } else {
+                words[i][j] = tolower(words[i][j]);
+                j++;
             }
-            else
-                words[i][j] = tolower(words[i][j]); // нижний регистр собственно
         }
 }
-bool threeInAWord(string word) { // Определяет содержит ли слово сочетание из трех алфавитно упорядоченных букв
-    int counter = 0;
-    for (int i = 0; i < word.length() - 1; i++) {
-        char c = word[i];
-        if (++c == word[i + 1]) counter++;
-        else counter = 0;
-        if (counter >= 2) return true;
+
+bool threeInAWord(const string& word) {
+    if (word.length() < 3) return false;
+    for (size_t i = 0; i <= word.length() - 3; i++) {
+        if (word[i + 1] == word[i] + 1 && word[i + 2] == word[i + 1] + 1) {
+            return true;
+        }
     }
     return false;
 }
-void sort(int cnt, string words[N_Max]) { // больше букв сортировка
+
+void sort(int cnt, string words[N_Max]) {
     for (int i = 0; i < cnt - 1; i++)
         for (int j = i + 1; j < cnt; j++) {
-            if (words[i].length() > words[j].length() || (words[i].length() == words[j].length() && words[i] > words[j]))
+            if (words[i].length() > words[j].length() || 
+                (words[i].length() == words[j].length() && words[i] > words[j]))
                 swap(words[i], words[j]);
         }
 }
-void write(int n, int cnt, string words[N_Max]) { // в консоль вывод
+
+void writeWords(int n, int cnt, string words[N_Max]) {
     ofstream out("output.txt");
+    if (!out.is_open()) {
+        cerr << "Ошибка открытия файла output.txt" << endl;
+        return;
+    }
+    int count = 0;
     string previous = "";
-    bool isFirst = true;
-    for (int i = 0; i < cnt; i++) {
-        if (n == 0) break;
-        if (isFirst) {
-            if (threeInAWord(words[i])) {
+    for (int i = 0; i < cnt && count < n; i++) {
+        if (threeInAWord(words[i]) && words[i] != previous && !words[i].empty()) {
             cout << words[i] << endl;
-            n--;
+            out << words[i] << endl;
             previous = words[i];
-            isFirst = false;
-            }
-        }
-        else
-        {
-            if (threeInAWord(words[i]) && words[i] != previous) {
-            cout << words[i] << endl;
-            n--;
-            previous = words[i];
-            }
+            count++;
         }
     }
+    out.close();
 }
-void writeToFile(int n, int cnt, string words[N_Max]) { // в файл
-    ofstream out("output.txt");
-    string previous = "";
-    bool isFirst = true;
-    for (int i = 0; i < cnt; i++)
-    {
-        if (n == 0) break;
-        if (isFirst) {
-            if (threeInAWord(words[i])) {
-            out << words[i] << endl;
-            n--;
-            previous = words[i];
-            isFirst = false;
-            }
-        }
-        else
-        {
-            if (threeInAWord(words[i]) && words[i] != previous) {
-            out << words[i] << endl;
-            n--;
-            previous = words[i];
-            }
-        }
-    }
-}
-int main()
-{
+
+int main() {
     setlocale(LC_ALL, "Ru");
-    int n = 0;
-    int cnt = 0; // кол-во слов
+    int n = 0, cnt = 0;
     string words[N_Max];
 
-    if (!Read(n, cnt, words))
+    if (!Read(n, words))
         return -1;
 
-    debugwrite(cnt, words);
+    cout << "Исходные слова:" << endl;
+    Write(cnt, words);
 
-    ClearWords(cnt, words);
+    clearWords(cnt, words);
     sort(cnt, words);
-    write(n, cnt, words);
-    writeToFile(n, cnt, words);
+    cout << "Результат:" << endl;
+    writeWords(n, cnt, words);
 
     return 0;
 }
